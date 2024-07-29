@@ -1,6 +1,10 @@
 # creds
 ```creds``` is a tool for managing the creds.txt file in penetration tests.
 
+
+```
+go install github.com/r0nk/creds@latest
+```
 ## get
 Get the path of creds.txt file, which can be in the current directory or any parent directory.
 ```
@@ -57,6 +61,7 @@ creds permutate
 Output creds with username as password (admin:admin)
 ```
 creds dual
+for c in $(creds dual); do wget -r ftp://$c@127.0.0.1; done
 ```
 
 Output creds with all possible permutations

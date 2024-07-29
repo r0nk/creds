@@ -118,6 +118,14 @@ func main() {
 		return
 	}
 
+	if len(os.Args) < 2 {
+		fmt.Printf("commands: path usernames passwords title capslock lowercase permutate dual all\n")
+		fmt.Printf("creds path # get the path of the creds.txt file, in this directory or above\n")
+		fmt.Printf("creds passwords bob # get all bobs passwords from creds.txt\n")
+		fmt.Printf("creds title # get all the passwords but capitalize usernames\n")
+		return
+	}
+
 	command := os.Args[1]
 	switch command {
 	case "path":
