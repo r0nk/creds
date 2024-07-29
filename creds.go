@@ -67,6 +67,42 @@ func title_creds(creds []cred) {
 	}
 }
 
+func capslock_creds(creds []cred) {
+	for _, c := range creds {
+		fmt.Printf("%s:%s\n", strings.ToUpper(c.username), c.password)
+	}
+}
+
+func lowercase_creds(creds []cred) {
+	for _, c := range creds {
+		fmt.Printf("%s:%s\n", strings.ToLower(c.username), c.password)
+	}
+}
+
+func permutate_creds(creds []cred) {
+	for _, a := range creds {
+		for _, b := range creds {
+			fmt.Printf("%s:%s\n", a.username, b.password)
+		}
+	}
+}
+
+func dual_creds(creds []cred) {
+	for _, a := range creds {
+		fmt.Printf("%s:%s\n", a.username, a.username)
+	}
+}
+
+//TODO this should format it in such a way that all possible combinations are created,
+//currently it only runs each modification sequentially
+func all_creds(creds []cred) {
+	title_creds(creds)
+	capslock_creds(creds)
+	lowercase_creds(creds)
+	permutate_creds(creds)
+	dual_creds(creds)
+}
+
 func main() {
 	const filename = "creds.txt"
 
@@ -84,6 +120,8 @@ func main() {
 
 	command := os.Args[1]
 	switch command {
+	case "path":
+		fmt.Printf("%s\n", file_path)
 	case "usernames":
 		if len(os.Args) < 3 {
 			for _, p := range creds {
@@ -112,5 +150,15 @@ func main() {
 		}
 	case "title":
 		title_creds(creds)
+	case "capslock":
+		capslock_creds(creds)
+	case "lowercase":
+		lowercase_creds(creds)
+	case "permutate":
+		permutate_creds(creds)
+	case "dual":
+		dual_creds(creds)
+	case "all":
+		all_creds(creds)
 	}
 }

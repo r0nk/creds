@@ -1,11 +1,11 @@
-# set
-
-Add a pair to the creds.txt file, where ever up the directory tree that bad boy is.
-```
-creds add 'bob:hunter1' # will add to creds.txt, ../creds.txt, ../../creds.txt, etc, only to whichever is found first.
-```
+```creds``` is a tool for managing the creds.txt file in penetration tests.
 
 # get
+path of creds.txt file
+```
+creds path
+```
+
 print all usernames
 ```
 creds usernames
