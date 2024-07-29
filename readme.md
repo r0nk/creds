@@ -1,14 +1,22 @@
+# creds
 ```creds``` is a tool for managing the creds.txt file in penetration tests.
 
-# get
-path of creds.txt file
+## get
+Get the path of creds.txt file, which can be in the current directory or any parent directory.
 ```
 creds path
+
+echo "bob:hunter1" | anew $(creds path)
 ```
 
 print all usernames
 ```
 creds usernames
+```
+
+print usernames for matching password
+```
+creds usernames 'hunter1'
 ```
 
 print all passwords
@@ -23,12 +31,8 @@ sshpass $(creds passwords bob | head -n 1) ssh bob@hostname echo SUCCESS!
 for pass in $(creds passwords bob) ; do sshpass $pass ssh bob@hostname ls; done
 ```
 
-print usernames for matching password hunter1
-```
-creds usernames 'hunter1'
-```
 
-# mod
+## generate
 Output creds with first letter of username words capitalized
 (bob dude:pass) -> (Bob Dude:pass)
 ```
@@ -58,13 +62,4 @@ creds dual
 Output creds with all possible permutations
 ```
 creds all
-```
-
-mod flags
-
-```
- -i     write changes directly to the creds file
- -u     only apply to username
- -p     only apply to password
-
 ```
