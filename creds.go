@@ -110,7 +110,7 @@ func dual_creds() {
 	}
 }
 
-func dump_creds() {
+func dump_creds(creds []cred) {
 	for _, a := range creds {
 		fmt.Printf("%s:%s\n", a.username, a.password)
 	}
@@ -131,6 +131,24 @@ func check_creds(creds []cred) {
 	//	results := c(cred)
 	//	TODO write results to correct filename
 	//}
+}
+
+func select_creds(query string) {
+	var ret []cred
+	for _, c := range creds {
+		if strings.Contains(strings.ToLower(c.username), strings.ToLower(query)) {
+			ret = append(ret, c)
+		}
+	}
+	if len(ret) == 0 { // no users? try passwords
+		for _, c := range creds {
+			if strings.Contains(strings.ToLower(c.password), strings.ToLower(query)) {
+				ret = append(ret, c)
+
+			}
+		}
+	}
+	dump_creds(ret)
 }
 
 func main() {
@@ -154,5 +172,5 @@ func main() {
 	if *all_mods_flag {
 		all_creds()
 	}
-	dump_creds()
+	select_creds(flag.Arg(0))
 }
