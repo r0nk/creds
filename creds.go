@@ -18,6 +18,8 @@ type cred struct {
 
 var creds []cred
 
+var one bool
+
 func find_file(filename string) (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -113,6 +115,27 @@ func dual_creds() {
 func dump_creds(creds []cred) {
 	for _, a := range creds {
 		fmt.Printf("%s:%s\n", a.username, a.password)
+		if one {
+			return
+		}
+	}
+}
+
+func dump_users(creds []cred) {
+	for _, a := range creds {
+		fmt.Printf("%s\n", a.username)
+		if one {
+			return
+		}
+	}
+}
+
+func dump_passwords(creds []cred) {
+	for _, a := range creds {
+		fmt.Printf("%s\n", a.password)
+		if one {
+			return
+		}
 	}
 }
 
@@ -133,7 +156,7 @@ func check_creds(creds []cred) {
 	//}
 }
 
-func select_creds(query string) {
+func select_creds(query string) []cred {
 	var ret []cred
 	for _, c := range creds {
 		if strings.Contains(strings.ToLower(c.username), strings.ToLower(query)) {
@@ -148,14 +171,24 @@ func select_creds(query string) {
 			}
 		}
 	}
-	dump_creds(ret)
+	return ret
 }
 
 func main() {
 	const filename = "creds.txt"
 
 	var all_mods_flag = flag.Bool("M", false, "Apply all possible mutations to creds.")
+	var only_passwords = flag.Bool("p", false, "Only dump passwords")
+	var only_users = flag.Bool("u", false, "Only dump users")
+	var one_flag = flag.Bool("1", false, "Only dump one result")
 	flag.Parse()
+
+	one = *one_flag
+
+	if *only_passwords && *only_users {
+		fmt.Printf("Error: -u and -p are exlusive options")
+		return
+	}
 
 	file_path, err := find_file(filename)
 	if err != nil {
@@ -172,5 +205,15 @@ func main() {
 	if *all_mods_flag {
 		all_creds()
 	}
-	select_creds(flag.Arg(0))
+	selected := select_creds(flag.Arg(0))
+	if !*only_users && !*only_passwords {
+		dump_creds(selected)
+	}
+	if *only_users {
+		dump_users(selected)
+	}
+
+	if *only_passwords {
+		dump_passwords(selected)
+	}
 }
