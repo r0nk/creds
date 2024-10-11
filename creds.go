@@ -54,12 +54,29 @@ func read_file_into_creds(file_path string) error {
 		line := scanner.Text()
 		parts := strings.SplitN(line, ":", 2)
 		if len(parts) == 2 {
-			creds = append(creds, cred{username: strings.TrimSpace(parts[0]), password: strings.TrimSpace(parts[1])})
+			add_cred(cred{username: strings.TrimSpace(parts[0]), password: strings.TrimSpace(parts[1])})
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func write_creds_to_file(file_path string) error {
+	file, err := os.OpenFile(file_path, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for _, c := range creds {
+		_, err := fmt.Fprintf(file, "%s:%s\n", c.username, c.password)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -115,27 +132,18 @@ func dual_creds() {
 func dump_creds(creds []cred) {
 	for _, a := range creds {
 		fmt.Printf("%s:%s\n", a.username, a.password)
-		if one {
-			return
-		}
 	}
 }
 
 func dump_users(creds []cred) {
 	for _, a := range creds {
 		fmt.Printf("%s\n", a.username)
-		if one {
-			return
-		}
 	}
 }
 
 func dump_passwords(creds []cred) {
 	for _, a := range creds {
 		fmt.Printf("%s\n", a.password)
-		if one {
-			return
-		}
 	}
 }
 
@@ -161,13 +169,18 @@ func select_creds(query string) []cred {
 	for _, c := range creds {
 		if strings.Contains(strings.ToLower(c.username), strings.ToLower(query)) {
 			ret = append(ret, c)
+			if one {
+				break
+			}
 		}
 	}
 	if len(ret) == 0 { // no users? try passwords
 		for _, c := range creds {
 			if strings.Contains(strings.ToLower(c.password), strings.ToLower(query)) {
 				ret = append(ret, c)
-
+				if one {
+					break
+				}
 			}
 		}
 	}
@@ -181,6 +194,7 @@ func main() {
 	var only_passwords = flag.Bool("p", false, "Only dump passwords")
 	var only_users = flag.Bool("u", false, "Only dump users")
 	var one_flag = flag.Bool("1", false, "Only dump one result")
+	var add_flag = flag.Bool("a", false, "Read credentials from stdin and add to creds.txt")
 	flag.Parse()
 
 	one = *one_flag
@@ -199,6 +213,20 @@ func main() {
 	err = read_file_into_creds(file_path)
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
+	}
+
+	if *add_flag {
+		err = read_file_into_creds("/dev/stdin")
+		if err != nil {
+			fmt.Println("Error reading from STDIN:", err)
+			return
+		}
+		err = write_creds_to_file(file_path)
+		if err != nil {
+			fmt.Println("Error writing to creds:", err)
+			return
+		}
 		return
 	}
 
