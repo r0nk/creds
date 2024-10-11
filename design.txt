@@ -1,0 +1,32 @@
+Should move to a selection first type argument
+
+case insensitive search for user
+
+$ creds -a 'BobbyFisher:Chess123!' #add to creds
+$ creds -C -a 'BobbyFisher:Chess123!' #add to creds and check
+$ creds -C --try 'BobbyFisher:Chess123!' #only check passed creds, don't add them
+
+$ creds bob
+Chess123!
+
+$ creds bob -m caser
+Chess123!
+chess123!
+CHESS123!
+
+$ creds bob -M
+//all possible modifications here
+
+$ creds bob -c smb
+// check bobs credentials using the smb check
+
+$ creds bob -C -M
+//all possible modifications run across all checks.
+
+
+checks are stored in CredsCheck files and  in ~/.creds_checks/*
+These are simple scripts where the first argument is the username and the second is the password
+
+checks outputs the character count and hashes for command outputs (if not null)
+
+it attempts to strip reflected outputs for hash checking

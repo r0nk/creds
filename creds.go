@@ -103,6 +103,15 @@ func all_creds(creds []cred) {
 	dual_creds(creds)
 }
 
+func check_creds(creds []cred) {
+	//Recursively get services below the creds.txt file
+	//directory structure like username/service/results.txt // smith/ftp/attempt.txt
+	//for c := range checks{
+	//	results := c(cred)
+	//	TODO write results to correct filename
+	//}
+}
+
 func main() {
 	const filename = "creds.txt"
 
