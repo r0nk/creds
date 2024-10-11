@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -14,6 +15,8 @@ type cred struct {
 	username string
 	password string
 }
+
+var creds []cred
 
 func find_file(filename string) (string, error) {
 	dir, err := os.Getwd()
@@ -37,14 +40,13 @@ func find_file(filename string) (string, error) {
 	return "", fmt.Errorf("Credential file %s not found.", filename)
 }
 
-func read_file_into_creds(file_path string) ([]cred, error) {
+func read_file_into_creds(file_path string) error {
 	file, err := os.Open(file_path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
-	var creds []cred
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -55,52 +57,71 @@ func read_file_into_creds(file_path string) ([]cred, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return err
 	}
 
-	return creds, nil
+	return nil
 }
 
-func title_creds(creds []cred) {
+func unique(cred cred, creds []cred) bool {
 	for _, c := range creds {
-		fmt.Printf("%s:%s\n", cases.Title(language.Und, cases.NoLower).String(c.username), c.password)
+		if c.username == cred.username && c.password == cred.password {
+			return false
+		}
+	}
+	return true
+}
+
+func add_cred(cred cred) {
+	if unique(cred, creds) {
+		creds = append(creds, cred)
 	}
 }
 
-func capslock_creds(creds []cred) {
+func title_creds() {
 	for _, c := range creds {
-		fmt.Printf("%s:%s\n", strings.ToUpper(c.username), c.password)
+		add_cred(cred{cases.Title(language.Und, cases.NoLower).String(c.username), c.password})
 	}
 }
 
-func lowercase_creds(creds []cred) {
+func capslock_creds() {
 	for _, c := range creds {
-		fmt.Printf("%s:%s\n", strings.ToLower(c.username), c.password)
+		add_cred(cred{strings.ToUpper(c.username), c.password})
 	}
 }
 
-func permutate_creds(creds []cred) {
+func lowercase_creds() {
+	for _, c := range creds {
+		add_cred(cred{strings.ToLower(c.username), c.password})
+	}
+}
+
+func permutate_creds() {
 	for _, a := range creds {
 		for _, b := range creds {
-			fmt.Printf("%s:%s\n", a.username, b.password)
+			add_cred(cred{a.username, b.password})
 		}
 	}
 }
 
-func dual_creds(creds []cred) {
+func dual_creds() {
 	for _, a := range creds {
-		fmt.Printf("%s:%s\n", a.username, a.username)
+		add_cred(cred{a.username, a.username})
 	}
 }
 
-//TODO this should format it in such a way that all possible combinations are created,
-//currently it only runs each modification sequentially
-func all_creds(creds []cred) {
-	title_creds(creds)
-	capslock_creds(creds)
-	lowercase_creds(creds)
-	permutate_creds(creds)
-	dual_creds(creds)
+func dump_creds() {
+	for _, a := range creds {
+		fmt.Printf("%s:%s\n", a.username, a.password)
+	}
+}
+
+func all_creds() {
+	title_creds()
+	capslock_creds()
+	lowercase_creds()
+	permutate_creds()
+	dual_creds()
 }
 
 func check_creds(creds []cred) {
@@ -115,67 +136,23 @@ func check_creds(creds []cred) {
 func main() {
 	const filename = "creds.txt"
 
+	var all_mods_flag = flag.Bool("M", false, "Apply all possible mutations to creds.")
+	flag.Parse()
+
 	file_path, err := find_file(filename)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	creds, err := read_file_into_creds(file_path)
+	err = read_file_into_creds(file_path)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	if len(os.Args) < 2 {
-		fmt.Printf("commands: path usernames passwords title capslock lowercase permutate dual all\n")
-		fmt.Printf("creds path # get the path of the creds.txt file, in this directory or above\n")
-		fmt.Printf("creds passwords bob # get all bobs passwords from creds.txt\n")
-		fmt.Printf("creds title # get all the passwords but capitalize usernames\n")
-		return
+	if *all_mods_flag {
+		all_creds()
 	}
-
-	command := os.Args[1]
-	switch command {
-	case "path":
-		fmt.Printf("%s\n", file_path)
-	case "usernames":
-		if len(os.Args) < 3 {
-			for _, p := range creds {
-				fmt.Printf("%s\n", p.username)
-			}
-		} else {
-			password := os.Args[2]
-			for _, p := range creds {
-				if p.password == password {
-					fmt.Printf("%s\n", p.username)
-				}
-			}
-		}
-	case "passwords":
-		if len(os.Args) < 3 {
-			for _, p := range creds {
-				fmt.Printf("%s\n", p.username)
-			}
-		} else {
-			username := os.Args[2]
-			for _, p := range creds {
-				if p.username == username {
-					fmt.Printf("%s\n", p.password)
-				}
-			}
-		}
-	case "title":
-		title_creds(creds)
-	case "capslock":
-		capslock_creds(creds)
-	case "lowercase":
-		lowercase_creds(creds)
-	case "permutate":
-		permutate_creds(creds)
-	case "dual":
-		dual_creds(creds)
-	case "all":
-		all_creds(creds)
-	}
+	dump_creds()
 }
