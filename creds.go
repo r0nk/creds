@@ -7,6 +7,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -155,15 +156,6 @@ func all_creds() {
 	dual_creds()
 }
 
-func check_creds(creds []cred) {
-	//Recursively get services below the creds.txt file
-	//directory structure like username/service/results.txt // smith/ftp/attempt.txt
-	//for c := range checks{
-	//	results := c(cred)
-	//	TODO write results to correct filename
-	//}
-}
-
 func select_creds(query string) []cred {
 	var ret []cred
 	for _, c := range creds {
@@ -187,6 +179,59 @@ func select_creds(query string) []cred {
 	return ret
 }
 
+//https://stackoverflow.com/questions/55300117/how-do-i-find-all-files-that-have-a-certain-extension-in-go-regardless-of-depth#67629473
+func WalkMatch(root, pattern string) ([]string, error) {
+	var matches []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if matched, err := filepath.Match(pattern, filepath.Base(path)); err != nil {
+			return err
+		} else if matched {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
+func run_cred_checks(creds []cred) {
+
+	file_path, err := find_file("creds.txt")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	dir := filepath.Dir(file_path)
+	matches, err := WalkMatch(dir, "credcheck")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	for _, match := range matches {
+		for _, c := range creds {
+			blue := "\033[34m"
+			cyan := "\033[36m"
+			yellow := "\033[33m"
+			green := "\033[32m"
+			reset := "\033[0m"
+			fmt.Printf("%s Checking %s%s%s %swith (%s%s%s:%s%s%s) %s\n", blue, green, match, reset, blue, cyan, c.username, reset, yellow, c.password, blue, reset)
+			output, err := exec.Command(match, c.username, c.password).CombinedOutput()
+			if err != nil {
+				fmt.Println("Running error:", err)
+			}
+			fmt.Printf("%s\n", output)
+		}
+	}
+}
+
 func main() {
 	const filename = "creds.txt"
 
@@ -195,6 +240,7 @@ func main() {
 	var only_users = flag.Bool("u", false, "Only dump users")
 	var one_flag = flag.Bool("1", false, "Only dump one result")
 	var add_flag = flag.Bool("a", false, "Read credentials from stdin and add to creds.txt")
+	var check_flag = flag.Bool("c", false, "Run every credcheck file under creds.txt directory.")
 	flag.Parse()
 
 	one = *one_flag
@@ -234,13 +280,16 @@ func main() {
 		all_creds()
 	}
 	selected := select_creds(flag.Arg(0))
+	if *check_flag {
+		run_cred_checks(selected)
+		return
+	}
 	if !*only_users && !*only_passwords {
 		dump_creds(selected)
 	}
 	if *only_users {
 		dump_users(selected)
 	}
-
 	if *only_passwords {
 		dump_passwords(selected)
 	}
